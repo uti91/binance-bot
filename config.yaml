@@ -1,0 +1,50 @@
+# ============ CẤU HÌNH CHÍNH ============
+market: spot            # spot | futures (USDT-M)
+mode: paper             # paper   = giả lập, dùng giá thật, KHÔNG cần API key Binance
+                        # testnet = gửi lệnh lên Binance testnet (tiền ảo)
+                        # live    = TIỀN THẬT (phải đặt biến môi trường I_ACCEPT_LIVE_TRADING=YES)
+
+symbols: [BTC/USDT, ETH/USDT]   # whitelist, chỉ trade các coin này
+quote: USDT
+timeframe: 1h                   # 5m | 15m | 1h | 4h | 1d ...
+
+decision_every_seconds: 900     # bao lâu gọi LLM ra quyết định 1 lần (mỗi coin = 1 lần gọi API)
+exit_check_every_seconds: 30    # bao lâu kiểm tra SL/TP/vị thế 1 lần (không tốn tiền LLM)
+
+paper_start_balance: 1000       # vốn ảo khi mode = paper
+
+# ============ QUẢN LÝ RỦI RO (code cứng, LLM không được vượt) ============
+risk:
+  risk_per_trade_pct: 0.5       # mất tối đa 0.5% vốn nếu chạm stop-loss
+  max_position_pct: 30          # giá trị 1 vị thế tối đa 30% vốn (x leverage nếu futures)
+  max_open_positions: 2
+  max_trades_per_day: 6
+  max_daily_loss_pct: 3         # lỗ 3%/ngày (UTC) -> chặn mở lệnh mới
+  min_confidence: 0.65          # LLM tự đánh giá độ tự tin, thấp hơn thì bỏ qua
+  min_rr: 1.5                   # tỉ lệ lời/lỗ tối thiểu (TP/SL)
+  min_sl_pct: 0.4               # stop-loss tối thiểu cách giá vào 0.4%
+  max_sl_pct: 6                 # stop-loss tối đa cách giá vào 6%
+  fee_pct: 0.05                 # phí mỗi chiều, chỉ dùng cho paper
+
+# ============ RIÊNG CHO FUTURES ============
+futures:
+  leverage: 3                   # nên <= 3
+  margin_mode: isolated         # isolated | cross
+  allow_short: true             # false = chỉ long
+
+# ============ TIN TỨC ============
+news:
+  max_items: 15
+  max_age_hours: 12
+  feeds:
+    - https://www.coindesk.com/arc/outboundfeeds/rss/
+    - https://cointelegraph.com/rss
+    - https://decrypt.co/feed
+
+# ============ LLM ============
+llm:
+  model: claude-sonnet-5-5
+  max_tokens: 1000
+
+notify:
+  telegram: false               # true + đặt TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID trong .env
